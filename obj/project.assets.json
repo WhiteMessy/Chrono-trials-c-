@@ -2323,19 +2323,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Revano\\.nuget\\packages\\": {}
+    "/home/codespace/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Revano\\OneDrive\\Bureaublad\\Chrono trails nieuweste versie\\ChronoTrial.csproj",
+      "projectUniqueName": "/workspaces/Chrono-trials-c-/ChronoTrial.csproj",
       "projectName": "ChronoTrial",
-      "projectPath": "C:\\Users\\Revano\\OneDrive\\Bureaublad\\Chrono trails nieuweste versie\\ChronoTrial.csproj",
-      "packagesPath": "C:\\Users\\Revano\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Revano\\OneDrive\\Bureaublad\\Chrono trails nieuweste versie\\obj\\",
+      "projectPath": "/workspaces/Chrono-trials-c-/ChronoTrial.csproj",
+      "packagesPath": "/home/codespace/.nuget/packages/",
+      "outputPath": "/workspaces/Chrono-trials-c-/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Revano\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "/home/codespace/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -2359,7 +2359,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "10.0.100"
+      "SdkAnalysisLevel": "10.0.200"
     },
     "frameworks": {
       "net8.0": {
@@ -2394,19 +2394,15 @@
         "downloadDependencies": [
           {
             "name": "Microsoft.AspNetCore.App.Ref",
-            "version": "[8.0.20, 8.0.20]"
+            "version": "[8.0.25, 8.0.25]"
           },
           {
-            "name": "Microsoft.NETCore.App.Host.win-x64",
-            "version": "[8.0.20, 8.0.20]"
+            "name": "Microsoft.NETCore.App.Host.linux-x64",
+            "version": "[8.0.25, 8.0.25]"
           },
           {
             "name": "Microsoft.NETCore.App.Ref",
-            "version": "[8.0.20, 8.0.20]"
-          },
-          {
-            "name": "Microsoft.WindowsDesktop.App.Ref",
-            "version": "[8.0.20, 8.0.20]"
+            "version": "[8.0.25, 8.0.25]"
           }
         ],
         "frameworkReferences": {
@@ -2417,7 +2413,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.100-rc.1.25451.107/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.200/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

@@ -11,57 +11,57 @@ build_property.EnforceExtendedAnalyzerRules =
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = ChronoTrial
 build_property.RootNamespace = ChronoTrial
-build_property.ProjectDir = C:\Users\Revano\OneDrive\Bureaublad\Chrono trails nieuweste versie\
+build_property.ProjectDir = /workspaces/Chrono-trials-c-/
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.RazorLangVersion = 8.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
-build_property.MSBuildProjectDirectory = C:\Users\Revano\OneDrive\Bureaublad\Chrono trails nieuweste versie
+build_property.MSBuildProjectDirectory = /workspaces/Chrono-trials-c-
 build_property._RazorSourceGeneratorDebug = 
 build_property.EffectiveAnalysisLevelStyle = 8.0
 build_property.EnableCodeStyleSeverity = 
 
-[C:/Users/Revano/OneDrive/Bureaublad/Chrono trails nieuweste versie/Pages/App.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQXBwLnJhem9y
+[/workspaces/Chrono-trials-c-/Pages/App.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQXBwLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Revano/OneDrive/Bureaublad/Chrono trails nieuweste versie/Pages/Game.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcR2FtZS5yYXpvcg==
+[/workspaces/Chrono-trials-c-/Pages/Game.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvR2FtZS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Revano/OneDrive/Bureaublad/Chrono trails nieuweste versie/Pages/Home.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSG9tZS5yYXpvcg==
+[/workspaces/Chrono-trials-c-/Pages/Home.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvSG9tZS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Revano/OneDrive/Bureaublad/Chrono trails nieuweste versie/Pages/Kopen.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcS29wZW4ucmF6b3I=
+[/workspaces/Chrono-trials-c-/Pages/Kopen.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvS29wZW4ucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Revano/OneDrive/Bureaublad/Chrono trails nieuweste versie/Pages/Layout/MainLayout.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTGF5b3V0XE1haW5MYXlvdXQucmF6b3I=
+[/workspaces/Chrono-trials-c-/Pages/Layout/MainLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvTGF5b3V0L01haW5MYXlvdXQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Revano/OneDrive/Bureaublad/Chrono trails nieuweste versie/Pages/Leaderboard.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTGVhZGVyYm9hcmQucmF6b3I=
+[/workspaces/Chrono-trials-c-/Pages/Leaderboard.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvTGVhZGVyYm9hcmQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Revano/OneDrive/Bureaublad/Chrono trails nieuweste versie/Pages/Login.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTG9naW4ucmF6b3I=
+[/workspaces/Chrono-trials-c-/Pages/Login.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvTG9naW4ucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Revano/OneDrive/Bureaublad/Chrono trails nieuweste versie/Pages/RedirectToLogin.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmVkaXJlY3RUb0xvZ2luLnJhem9y
+[/workspaces/Chrono-trials-c-/Pages/RedirectToLogin.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvUmVkaXJlY3RUb0xvZ2luLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Revano/OneDrive/Bureaublad/Chrono trails nieuweste versie/Pages/Registreren.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmVnaXN0cmVyZW4ucmF6b3I=
+[/workspaces/Chrono-trials-c-/Pages/Registreren.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvUmVnaXN0cmVyZW4ucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Revano/OneDrive/Bureaublad/Chrono trails nieuweste versie/Pages/Routes.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUm91dGVzLnJhem9y
+[/workspaces/Chrono-trials-c-/Pages/Routes.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvUm91dGVzLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/Revano/OneDrive/Bureaublad/Chrono trails nieuweste versie/_Imports.razor]
+[/workspaces/Chrono-trials-c-/_Imports.razor]
 build_metadata.AdditionalFiles.TargetPath = X0ltcG9ydHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
