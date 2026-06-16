@@ -1,0 +1,154 @@
+@page "/game"
+@attribute [Authorize]
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider Auth
+@inject NavigationManager Nav
+
+<PageTitle>Spelen — Chrono Trials</PageTitle>
+
+<div class="page-wrapper" style="background:var(--dark);">
+    <div style="padding-top:64px;">
+
+        @if (!_hasAccess)
+        {
+            <div class="container" style="text-align:center;padding-top:5rem;">
+                <h2 class="page-title">Geen toegang</h2>
+                <p style="color:var(--text-dim);margin:1rem 0 2rem;letter-spacing:0.05em;">
+                    Je moet de game eerst kopen om te spelen.
+                </p>
+                <a href="/kopen" class="btn btn-gold">Koop nu — €4,99</a>
+            </div>
+        }
+        else
+        {
+            <div style="max-width:1100px;margin:0 auto;padding:1.5rem;">
+
+                <!-- Header balk -->
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:1rem;">
+                    <div>
+                        <h1 style="font-family:'Orbitron',monospace;font-size:1.4rem;color:var(--gold-bright);letter-spacing:0.1em;">
+                            CHRONO TRIALS
+                        </h1>
+                        <p style="font-size:12px;color:var(--text-dim);letter-spacing:0.2em;">WEBGL · UNITY</p>
+                    </div>
+                    <div style="display:flex;gap:0.75rem;align-items:center;">
+                        <a href="/wwwroot/downloads/ChronoTrials.zip" download class="btn btn-outline btn-sm">
+                            ⬇ Download
+                        </a>
+                        <a href="/leaderboard" class="btn btn-outline btn-sm">🏆 Leaderboard</a>
+                        <button class="btn btn-gold btn-sm" onclick="goFullscreen()">⛶ Fullscreen</button>
+                    </div>
+                </div>
+
+                <!-- Game frame -->
+                <div class="game-frame" id="game-container">
+                    <div class="corner-decoration corner-tl"></div>
+                    <div class="corner-decoration corner-tr"></div>
+                    <div class="corner-decoration corner-bl"></div>
+                    <div class="corner-decoration corner-br"></div>
+
+                    <!-- Unity laad balk -->
+                    <div id="unity-loading" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--dark);z-index:10;">
+                        <p style="font-family:'Orbitron',monospace;font-size:12px;letter-spacing:0.3em;color:var(--gold-dim);margin-bottom:1.5rem;">
+                            LADEN...
+                        </p>
+                        <div style="width:280px;height:3px;background:rgba(201,168,76,0.15);border-radius:2px;overflow:hidden;">
+                            <div id="unity-progress" style="height:100%;width:0%;background:var(--gold-bright);transition:width 0.3s;box-shadow:0 0 8px var(--gold-bright);"></div>
+                        </div>
+                        <p id="unity-progress-text" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text-dim);margin-top:0.75rem;">0%</p>
+                    </div>
+
+                    <canvas id="unity-canvas" tabindex="-1"
+                            style="width:100%;height:100%;display:block;"></canvas>
+                </div>
+
+                <!-- Gebruiker info + leaderboard submit -->
+                <div style="display:flex;gap:1rem;margin-top:1rem;flex-wrap:wrap;">
+                    <div class="stat-item" style="background:var(--surface);border:1px solid var(--line);flex:1;">
+                        <span class="stat-label">Speler</span>
+                        <span class="stat-value" style="font-size:1rem;">@_username</span>
+                    </div>
+                    <div class="stat-item" style="background:var(--surface);border:1px solid var(--line);flex:1;">
+                        <span class="stat-label">Status</span>
+                        <span class="stat-value" style="font-size:0.9rem;color:var(--cyan);">● LIVE</span>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<script>
+    // Unity WebGL setup
+    var unityInstance = null;
+
+    window.addEventListener('load', function() {
+        var loaderUrl = "Build/ChronoTrials.loader.js";
+        var script = document.createElement("script");
+        script.src = loaderUrl;
+        script.onerror = function() {
+            document.getElementById('unity-loading').innerHTML =
+                '<p style="font-family:Orbitron,monospace;color:#f04a4a;letter-spacing:0.2em;">BUILD BESTANDEN NIET GEVONDEN</p>' +
+                '<p style="color:var(--text-dim);font-size:12px;margin-top:0.5rem;">Zet je Unity WebGL build in wwwroot/Build/</p>';
+        };
+        script.onload = function() {
+            createUnityInstance(document.querySelector("#unity-canvas"), {
+                dataUrl: "Build/ChronoTrials.data",
+                frameworkUrl: "Build/ChronoTrials.framework.js",
+                codeUrl: "Build/ChronoTrials.wasm",
+                streamingAssetsUrl: "StreamingAssets",
+                companyName: "DefaultCompany",
+                productName: "Chrono Trials",
+                productVersion: "1.0",
+            }, function(progress) {
+                var pct = Math.round(progress * 100);
+                document.getElementById('unity-progress').style.width = pct + '%';
+                document.getElementById('unity-progress-text').textContent = pct + '%';
+            }).then(function(instance) {
+                unityInstance = instance;
+                document.getElementById('unity-loading').style.display = 'none';
+            }).catch(function(msg) {
+                console.error(msg);
+            });
+        };
+        document.body.appendChild(script);
+    });
+
+    function goFullscreen() {
+        if (unityInstance) unityInstance.SetFullscreen(1);
+    }
+
+    // Vanuit Unity aanroepen om score op te slaan
+    window.submitScore = async function(username, time) {
+        try {
+            const res = await fetch('/api/score', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, time })
+            });
+            return res.ok;
+        } catch(e) {
+            return false;
+        }
+    };
+</script>
+
+@code {
+    bool _hasAccess = false;
+    string _username = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await Auth.GetAuthenticationStateAsync();
+        if (auth.User.Identity?.IsAuthenticated == true)
+        {
+            _username = auth.User.Identity.Name ?? "";
+            var userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (userId != null)
+            {
+                var user = await UserManager.FindByIdAsync(userId);
+                _hasAccess = user?.HasPurchased ?? false;
+            }
+        }
+    }
+}

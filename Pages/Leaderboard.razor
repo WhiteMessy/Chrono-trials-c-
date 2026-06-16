@@ -1,0 +1,148 @@
+@page "/leaderboard"
+@inject LeaderboardService Lb
+@implements IDisposable
+
+<PageTitle>Leaderboard — Chrono Trials</PageTitle>
+
+<div class="container" style="padding-top:5rem;">
+
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:2rem;">
+        <div>
+            <h1 class="page-title">Leaderboard</h1>
+            <p class="page-subtitle">
+                <span class="live-dot"></span>
+                Live — updates automatisch
+            </p>
+        </div>
+        <div style="display:flex;gap:0.75rem;align-items:center;">
+            <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:0.1em;">
+                @(_entries?.Count ?? 0) spelers
+            </span>
+            <a href="/game" class="btn btn-outline btn-sm">▶ Speel Nu</a>
+        </div>
+    </div>
+
+    @if (_entries == null)
+    {
+        <div class="lb-empty">Laden...</div>
+    }
+    else if (_entries.Count == 0)
+    {
+        <div class="lb-empty">
+            <p style="margin-bottom:0.5rem;">NOG GEEN TIJDEN</p>
+            <p style="font-family:'Rajdhani',sans-serif;font-size:14px;">Wees de eerste!</p>
+        </div>
+    }
+    else
+    {
+        <div style="border:1px solid var(--line);overflow:hidden;">
+            <table class="lb-table">
+                <thead>
+                    <tr>
+                        <th style="width:60px;">#</th>
+                        <th>Speler</th>
+                        <th>Tijd</th>
+                        <th>Datum</th>
+                        <AuthorizeView Roles="Admin">
+                            <th style="width:80px;"></th>
+                        </AuthorizeView>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var (entry, i) in _entries.Select((e, i) => (e, i)))
+                    {
+                        <tr>
+                            <td>
+                                <span class="lb-rank @(i == 0 ? "lb-rank-1" : i == 1 ? "lb-rank-2" : i == 2 ? "lb-rank-3" : "")">
+                                    @(i == 0 ? "🥇" : i == 1 ? "🥈" : i == 2 ? "🥉" : $"#{i + 1}")
+                                </span>
+                            </td>
+                            <td><span class="lb-name">@entry.Username</span></td>
+                            <td><span class="lb-time">@entry.Time</span></td>
+                            <td><span class="lb-date">@entry.Date.ToString("dd-MM-yyyy")</span></td>
+                            <AuthorizeView Roles="Admin">
+                                <td>
+                                    <button class="btn btn-danger btn-sm" @onclick="() => Delete(entry.Id)">✕</button>
+                                </td>
+                            </AuthorizeView>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <!-- Handmatig tijd toevoegen (voor testen) -->
+    <AuthorizeView>
+        <Authorized>
+            <div class="card" style="margin-top:2rem;max-width:500px;">
+                <p class="card-title">Tijd handmatig toevoegen (test)</p>
+                <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+                    <input class="form-input" @bind="_newTime" placeholder="01:23.456" style="flex:1;min-width:120px;" />
+                    <button class="btn btn-gold btn-sm" @onclick="AddTime">Toevoegen</button>
+                </div>
+                @if (!string.IsNullOrEmpty(_msg))
+                {
+                    <div class="alert @(_msgOk ? "alert-success" : "alert-error")" style="margin-top:0.75rem;">@_msg</div>
+                }
+            </div>
+        </Authorized>
+    </AuthorizeView>
+
+</div>
+
+@code {
+    List<LeaderboardEntry>? _entries;
+    string _newTime = "", _msg = "";
+    bool _msgOk = false;
+    
+    // Timer voor automatisch verversen
+    private System.Threading.Timer? _timer;
+
+    [CascadingParameter] Task<AuthenticationState>? AuthState { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEntries();
+        
+        // Verversen elke 5 seconden voor live updates
+        _timer = new System.Threading.Timer(async _ =>
+        {
+            await LoadEntries();
+            await InvokeAsync(StateHasChanged);
+        }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+    }
+
+    async Task LoadEntries() => _entries = await Lb.GetTopAsync(50);
+
+    async Task AddTime()
+    {
+        if (string.IsNullOrWhiteSpace(_newTime)) return;
+        
+        var auth = AuthState != null ? await AuthState : null;
+        var username = auth?.User.Identity?.Name ?? "Onbekend";
+
+        await Lb.AddAsync(new LeaderboardEntry
+        {
+            Username = username,
+            Time = _newTime,
+            Date = DateTime.UtcNow
+        });
+
+        _newTime = "";
+        _msg = "Tijd toegevoegd!";
+        _msgOk = true;
+        await LoadEntries();
+        
+        // Verberg bericht na 3 seconden
+        _ = Task.Delay(3000).ContinueWith(_ => { _msg = ""; InvokeAsync(StateHasChanged); });
+    }
+
+    async Task Delete(int id)
+    {
+        await Lb.DeleteAsync(id);
+        await LoadEntries();
+    }
+
+    public void Dispose() => _timer?.Dispose();
+}

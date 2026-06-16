@@ -1,0 +1,56 @@
+@page "/"
+
+<PageTitle>Chrono Trials — Race Against Time</PageTitle>
+
+<div class="hero">
+    <div class="hero-bg"></div>
+
+    <p class="hero-eyebrow">Amura's Water World presenteert</p>
+    <h1 class="hero-title glitch">CHRONO<br/>TRIALS</h1>
+    <p class="hero-title-sub">RACE AGAINST TIME</p>
+    <div class="hero-divider"></div>
+    <p class="hero-desc">
+        Elke milliseconde telt. Beheers de banen, versla je tegenstanders
+        en claim je plek op het leaderboard.
+    </p>
+
+    <div class="hero-actions">
+        <AuthorizeView>
+            <Authorized>
+                @if (context.User.HasClaim("HasPurchased", "true"))
+                {
+                    <a href="/game" class="btn btn-cyan">▶ Speel Nu</a>
+                    <a href="/leaderboard" class="btn btn-outline">🏆 Leaderboard</a>
+                }
+                else
+                {
+                    <a href="/kopen" class="btn btn-gold">Koop Nu — €4,99</a>
+                    <a href="/leaderboard" class="btn btn-outline">🏆 Leaderboard</a>
+                }
+            </Authorized>
+            <NotAuthorized>
+                <a href="/kopen" class="btn btn-gold">Koop Nu — €4,99</a>
+                <a href="/registreren" class="btn btn-outline">Maak Account</a>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+
+    <div class="stats-bar" style="margin-top:4rem;width:100%;max-width:600px;">
+        <div class="stat-item">
+            <span class="stat-label">Prijs</span>
+            <span class="stat-value">€4.99</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Platform</span>
+            <span class="stat-value" style="font-size:1rem;">WebGL</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Engine</span>
+            <span class="stat-value" style="font-size:1rem;">Unity</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Versie</span>
+            <span class="stat-value" style="font-size:1rem;">1.0</span>
+        </div>
+    </div>
+</div>

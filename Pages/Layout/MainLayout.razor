@@ -1,0 +1,43 @@
+@inherits LayoutComponentBase
+@inject NavigationManager Nav
+
+<div class="page-wrapper">
+    <nav class="nav">
+        <a href="/" class="nav-logo glitch">CHRONO<span>TRIALS</span></a>
+
+        <a href="/" class="nav-link @(IsActive("/") ? "active" : "")">Home</a>
+        <a href="/game" class="nav-link @(IsActive("/game") ? "active" : "")">Spelen</a>
+        <a href="/leaderboard" class="nav-link @(IsActive("/leaderboard") ? "active" : "")">Leaderboard</a>
+        <a href="/kopen" class="nav-link @(IsActive("/kopen") ? "active" : "")">Kopen</a>
+
+        <AuthorizeView>
+            <Authorized>
+                <span class="nav-user">@context.User.Identity?.Name</span>
+                <form action="/Account/Logout" method="post" style="display:inline">
+                    <AntiforgeryToken />
+                    <button type="submit" class="btn btn-outline btn-sm" style="border-color:rgba(240,74,74,0.4);color:#f08080;">Uitloggen</button>
+                </form>
+            </Authorized>
+            <NotAuthorized>
+                <a href="/login" class="btn btn-outline btn-sm">Inloggen</a>
+                <a href="/registreren" class="btn btn-gold btn-sm">Registreren</a>
+            </NotAuthorized>
+        </AuthorizeView>
+    </nav>
+
+    <main>
+        @Body
+    </main>
+
+    <footer class="footer">
+        CHRONO TRIALS &nbsp;·&nbsp; AMURA'S WATER WORLD &nbsp;·&nbsp; 2025
+    </footer>
+</div>
+
+@code {
+    bool IsActive(string href)
+    {
+        var current = Nav.ToBaseRelativePath(Nav.Uri);
+        return href == "/" ? current == "" : current.StartsWith(href.TrimStart('/'));
+    }
+}

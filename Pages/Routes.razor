@@ -1,0 +1,26 @@
+<Router AppAssembly="typeof(App).Assembly">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+            <NotAuthorized>
+                @if (context.User.Identity?.IsAuthenticated != true)
+                {
+                    <RedirectToLogin />
+                }
+                else
+                {
+                    <p>Je hebt geen toegang tot deze pagina.</p>
+                }
+            </NotAuthorized>
+        </AuthorizeRouteView>
+    </Found>
+    <NotFound>
+        <PageTitle>404 — Niet gevonden</PageTitle>
+        <LayoutView Layout="typeof(Layout.MainLayout)">
+            <div class="container" style="text-align:center;padding-top:8rem;">
+                <h1 class="page-title">404</h1>
+                <p class="page-subtitle">Pagina niet gevonden</p>
+                <a href="/" class="btn btn-outline">Terug naar start</a>
+            </div>
+        </LayoutView>
+    </NotFound>
+</Router>

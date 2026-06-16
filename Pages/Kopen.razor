@@ -1,0 +1,176 @@
+@page "/kopen"
+@inject PaymentService PaymentSvc
+@inject AuthenticationStateProvider Auth
+@inject NavigationManager Nav
+@inject UserManager<ApplicationUser> UserManager
+
+<PageTitle>Kopen — Chrono Trials</PageTitle>
+
+<div class="container-sm" style="padding-top:5rem;">
+
+    <AuthorizeView>
+        <NotAuthorized>
+            <div style="text-align:center;padding:3rem 0;">
+                <h2 class="page-title">Inloggen vereist</h2>
+                <p class="page-subtitle" style="margin-bottom:2rem;">Maak eerst een account aan om te kopen</p>
+                <div style="display:flex;gap:1rem;justify-content:center;">
+                    <a href="/registreren" class="btn btn-gold">Registreren</a>
+                    <a href="/login" class="btn btn-outline">Inloggen</a>
+                </div>
+            </div>
+        </NotAuthorized>
+
+        <Authorized>
+            @if (_alreadyOwned)
+            {
+                <div style="text-align:center;padding:3rem 0;">
+                    <div style="font-size:3rem;margin-bottom:1rem;">✅</div>
+                    <h2 class="page-title" style="font-size:2rem;">Je hebt de game al!</h2>
+                    <p style="color:var(--text-dim);margin:1rem 0 2rem;letter-spacing:0.05em;">
+                        Je kunt Chrono Trials direct spelen.
+                    </p>
+                    <div style="display:flex;gap:1rem;justify-content:center;">
+                        <a href="/game" class="btn btn-cyan">▶ Speel Nu</a>
+                        <a href="/leaderboard" class="btn btn-outline">🏆 Leaderboard</a>
+                    </div>
+                </div>
+            }
+            else if (_paymentStep == 0)
+            {
+                <!-- Stap 1: Prijsoverzicht -->
+                <div class="price-card">
+                    <p style="font-family:'Orbitron',monospace;font-size:10px;letter-spacing:0.4em;color:var(--gold-dim);text-transform:uppercase;">
+                        Eenmalige aankoop
+                    </p>
+                    <h1 class="page-title" style="margin:0.5rem 0 0;">Chrono Trials</h1>
+
+                    <div class="price-tag"><sup>€</sup>4<span style="font-size:2rem;">,99</span></div>
+
+                    <ul class="price-features">
+                        <li>Volledige game toegang</li>
+                        <li>Direct spelen in je browser</li>
+                        <li>Game downloaden</li>
+                        <li>Leaderboard toegang</li>
+                        <li>Gratis updates</li>
+                    </ul>
+
+                    <button class="btn btn-gold" style="width:100%;justify-content:center;font-size:13px;padding:1.1rem;"
+                            @onclick="StartPayment" disabled="@_loading">
+                        @(_loading ? "Bezig..." : "Betaal €4,99 via Mollie")
+                    </button>
+
+                    <p style="font-size:11px;color:var(--text-dim);margin-top:1rem;letter-spacing:0.05em;">
+                        🔒 Veilige betaling · Demo modus actief
+                    </p>
+                </div>
+            }
+            else if (_paymentStep == 1)
+            {
+                <!-- Stap 2: Betaal simulatie (demo) -->
+                <div class="card">
+                    <p class="card-title">Betaalscherm — Demo Modus</p>
+
+                    <div class="payment-terminal">
+                        <div class="payment-line">CHRONO TRIALS BETAALVERZOEK</div>
+                        <div class="payment-line dim">──────────────────────────</div>
+                        <div class="payment-line">Bestelling: @_orderId</div>
+                        <div class="payment-line gold">Bedrag: EUR 4.99</div>
+                        <div class="payment-line dim">Status: Wachten op betaling...</div>
+                        <div class="payment-line dim">──────────────────────────</div>
+                        <div class="payment-line dim">DEMO MODUS — geen echt geld</div>
+                    </div>
+
+                    <p style="font-size:14px;color:var(--text-mid);margin-bottom:1.5rem;letter-spacing:0.03em;">
+                        Dit is de demo betaalpagina. In productie word je hier doorgestuurd naar Mollie.
+                        Klik hieronder om een succesvolle betaling te simuleren.
+                    </p>
+
+                    <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+                        <button class="btn btn-cyan" style="flex:1;justify-content:center;"
+                                @onclick="SimulatePaid" disabled="@_loading">
+                            ✓ Betaling geslaagd (simuleer)
+                        </button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => _paymentStep = 0">
+                            ✕ Annuleren
+                        </button>
+                    </div>
+                </div>
+            }
+            else if (_paymentStep == 2)
+            {
+                <!-- Stap 3: Succes -->
+                <div style="text-align:center;padding:2rem 0;">
+                    <div style="font-size:4rem;margin-bottom:1rem;animation:fadeInUp 0.5s ease;">🎉</div>
+                    <h2 class="page-title" style="font-size:2.5rem;">Betaling gelukt!</h2>
+                    <p style="color:var(--text-mid);font-size:16px;margin:1rem 0;letter-spacing:0.05em;">
+                        Welkom bij Chrono Trials, @_userName!
+                    </p>
+
+                    <div class="payment-terminal" style="text-align:left;max-width:360px;margin:1.5rem auto;">
+                        <div class="payment-line success">✓ BETALING GOEDGEKEURD</div>
+                        <div class="payment-line dim">──────────────────────────</div>
+                        <div class="payment-line">Order: @_orderId</div>
+                        <div class="payment-line gold">EUR 4.99 — VOLDAAN</div>
+                        <div class="payment-line success">Game toegang: ACTIEF</div>
+                    </div>
+
+                    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:2rem;">
+                        <a href="/game" class="btn btn-gold">▶ Speel Nu</a>
+                        <a href="/leaderboard" class="btn btn-outline">🏆 Leaderboard</a>
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <div class="alert alert-error" style="margin-top:1rem;">@_error</div>
+            }
+        </Authorized>
+    </AuthorizeView>
+</div>
+
+@code {
+    int _paymentStep = 0;
+    string _orderId = "", _userName = "", _userId = "", _error = "";
+    bool _loading = false, _alreadyOwned = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await Auth.GetAuthenticationStateAsync();
+        if (auth.User.Identity?.IsAuthenticated == true)
+        {
+            _userName = auth.User.Identity.Name ?? "";
+            _userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
+
+            var user = await UserManager.FindByIdAsync(_userId);
+            _alreadyOwned = user?.HasPurchased ?? false;
+        }
+    }
+
+    async Task StartPayment()
+    {
+        _loading = true;
+        _error = "";
+        try
+        {
+            _orderId = await PaymentSvc.CreateOrderAsync(_userId);
+            _paymentStep = 1;
+        }
+        catch (Exception ex)
+        {
+            _error = $"Fout: {ex.Message}";
+        }
+        _loading = false;
+    }
+
+    async Task SimulatePaid()
+    {
+        _loading = true;
+        var success = await PaymentSvc.CompletePaymentAsync(_orderId, _userId);
+        if (success)
+            _paymentStep = 2;
+        else
+            _error = "Er ging iets mis. Probeer opnieuw.";
+        _loading = false;
+    }
+}
