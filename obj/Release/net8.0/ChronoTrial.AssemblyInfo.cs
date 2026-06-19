@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ChronoTrial")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cc48c5c604c9f713d5274b189b1919b16de80c0e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5b7e19490d7d8e12b57b12d91b1ca8884ae56dc9")]
 [assembly: System.Reflection.AssemblyProductAttribute("ChronoTrial")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ChronoTrial")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
