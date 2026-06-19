@@ -1,8 +1,9 @@
 @page "/game"
 @attribute [Authorize]
-@inject UserManager<ApplicationUser> UserManager
 @inject AuthenticationStateProvider Auth
 @inject NavigationManager Nav
+@inject ApplicationDbContext Db
+@using Microsoft.EntityFrameworkCore
 
 <PageTitle>Spelen — Chrono Trials</PageTitle>
 
@@ -146,8 +147,7 @@
             var userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (userId != null)
             {
-                var user = await UserManager.FindByIdAsync(userId);
-                _hasAccess = user?.HasPurchased ?? false;
+                _hasAccess = await Db.Purchases.AnyAsync(p => p.UserId == userId && p.Status == "paid");
             }
         }
     }

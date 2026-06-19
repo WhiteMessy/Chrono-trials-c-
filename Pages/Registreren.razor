@@ -1,7 +1,4 @@
 @page "/registreren"
-@inject UserManager<ApplicationUser> UserManager
-@inject SignInManager<ApplicationUser> SignInManager
-@inject NavigationManager Nav
 
 <PageTitle>Registreren — Chrono Trials</PageTitle>
 
@@ -9,36 +6,38 @@
     <div class="card">
         <p class="card-title">Account aanmaken</p>
 
-        @if (!string.IsNullOrEmpty(_error))
+        @if (!string.IsNullOrEmpty(Error))
         {
-            <div class="alert alert-error">@_error</div>
+            <div class="alert alert-error">@Error</div>
         }
 
-        <div class="form-group">
-            <label class="form-label">Gebruikersnaam</label>
-            <input class="form-input" @bind="_username" placeholder="JouwNaam" maxlength="20" />
-        </div>
+        <form method="post" action="/auth/register">
+            <input type="hidden" name="returnUrl" value="@ReturnUrl" />
 
-        <div class="form-group">
-            <label class="form-label">E-mailadres</label>
-            <input class="form-input" type="email" @bind="_email" placeholder="jij@email.com" />
-        </div>
+            <div class="form-group">
+                <label class="form-label">Gebruikersnaam</label>
+                <input class="form-input" name="username" placeholder="JouwNaam" maxlength="20" autocomplete="username" />
+            </div>
 
-        <div class="form-group">
-            <label class="form-label">Wachtwoord (minimaal 6 tekens)</label>
-            <input class="form-input" type="password" @bind="_password" placeholder="••••••" />
-        </div>
+            <div class="form-group">
+                <label class="form-label">E-mailadres</label>
+                <input class="form-input" type="email" name="email" placeholder="jij@email.com" autocomplete="email" />
+            </div>
 
-        <div class="form-group">
-            <label class="form-label">Wachtwoord herhalen</label>
-            <input class="form-input" type="password" @bind="_passwordConfirm" placeholder="••••••"
-                   @onkeydown="@(async e => { if (e.Key == "Enter") await Register(); })" />
-        </div>
+            <div class="form-group">
+                <label class="form-label">Wachtwoord (minimaal 6 tekens)</label>
+                <input class="form-input" type="password" name="password" placeholder="••••••" autocomplete="new-password" />
+            </div>
 
-        <button class="btn btn-gold" style="width:100%;justify-content:center;"
-                @onclick="Register" disabled="@_loading">
-            @(_loading ? "Bezig..." : "Account aanmaken")
-        </button>
+            <div class="form-group">
+                <label class="form-label">Wachtwoord herhalen</label>
+                <input class="form-input" type="password" name="passwordConfirm" placeholder="••••••" autocomplete="new-password" />
+            </div>
+
+            <button class="btn btn-gold" style="width:100%;justify-content:center;" type="submit">
+                Account aanmaken
+            </button>
+        </form>
 
         <p style="text-align:center;margin-top:1.5rem;font-size:14px;color:var(--text-dim);">
             Al een account?
@@ -48,38 +47,6 @@
 </div>
 
 @code {
-    string _username = "", _email = "", _password = "", _passwordConfirm = "", _error = "";
-    bool _loading = false;
-
-    async Task Register()
-    {
-        _error = "";
-
-        if (string.IsNullOrWhiteSpace(_username)) { _error = "Vul een gebruikersnaam in."; return; }
-        if (string.IsNullOrWhiteSpace(_email))    { _error = "Vul een e-mailadres in."; return; }
-        if (_password != _passwordConfirm)         { _error = "Wachtwoorden komen niet overeen."; return; }
-        if (_password.Length < 6)                  { _error = "Wachtwoord moet minimaal 6 tekens zijn."; return; }
-
-        _loading = true;
-
-        var user = new ApplicationUser
-        {
-            UserName = _username,
-            Email = _email,
-            DisplayName = _username
-        };
-
-        var result = await UserManager.CreateAsync(user, _password);
-
-        if (result.Succeeded)
-        {
-            await SignInManager.SignInAsync(user, isPersistent: true);
-            Nav.NavigateTo("/kopen", forceLoad: true);
-        }
-        else
-        {
-            _error = string.Join(" ", result.Errors.Select(e => e.Description));
-            _loading = false;
-        }
-    }
+    [SupplyParameterFromQuery] public string? Error { get; set; }
+    [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
 }

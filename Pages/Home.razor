@@ -1,4 +1,7 @@
 @page "/"
+@inject AuthenticationStateProvider Auth
+@inject ApplicationDbContext Db
+@using Microsoft.EntityFrameworkCore
 
 <PageTitle>Chrono Trials — Race Against Time</PageTitle>
 
@@ -17,7 +20,7 @@
     <div class="hero-actions">
         <AuthorizeView>
             <Authorized>
-                @if (context.User.HasClaim("HasPurchased", "true"))
+                @if (_hasPurchased)
                 {
                     <a href="/game" class="btn btn-cyan">▶ Speel Nu</a>
                     <a href="/leaderboard" class="btn btn-outline">🏆 Leaderboard</a>
@@ -54,3 +57,16 @@
         </div>
     </div>
 </div>
+
+@code {
+    bool _hasPurchased;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await Auth.GetAuthenticationStateAsync();
+        var userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        _hasPurchased = !string.IsNullOrWhiteSpace(userId)
+            && await Db.Purchases.AnyAsync(p => p.UserId == userId && p.Status == "paid");
+    }
+}

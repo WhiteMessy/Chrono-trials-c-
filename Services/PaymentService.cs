@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using ChronoTrial.Data;
 using ChronoTrial.Models;
 
@@ -11,12 +11,10 @@ namespace ChronoTrial.Services;
 public class PaymentService
 {
     private readonly ApplicationDbContext _db;
-    private readonly UserManager<ApplicationUser> _userManager;
 
-    public PaymentService(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
+    public PaymentService(ApplicationDbContext db)
     {
         _db = db;
-        _userManager = userManager;
     }
 
     // Maak een nep-betaling aan en geef een order ID terug
@@ -38,18 +36,10 @@ public class PaymentService
     // Simuleer een geslaagde betaling (demo modus)
     public async Task<bool> CompletePaymentAsync(string orderId, string userId)
     {
-        var purchase = _db.Purchases.FirstOrDefault(p => p.OrderId == orderId && p.UserId == userId);
+        var purchase = await _db.Purchases.FirstOrDefaultAsync(p => p.OrderId == orderId && p.UserId == userId);
         if (purchase == null) return false;
 
         purchase.Status = "paid";
-        
-        var user = await _userManager.FindByIdAsync(userId);
-        if (user != null)
-        {
-            user.HasPurchased = true;
-            user.PurchaseDate = DateTime.UtcNow;
-            await _userManager.UpdateAsync(user);
-        }
 
         await _db.SaveChangesAsync();
         return true;

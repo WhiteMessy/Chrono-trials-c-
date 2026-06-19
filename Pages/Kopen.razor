@@ -2,7 +2,8 @@
 @inject PaymentService PaymentSvc
 @inject AuthenticationStateProvider Auth
 @inject NavigationManager Nav
-@inject UserManager<ApplicationUser> UserManager
+@inject ApplicationDbContext Db
+@using Microsoft.EntityFrameworkCore
 
 <PageTitle>Kopen — Chrono Trials</PageTitle>
 
@@ -142,8 +143,8 @@
             _userName = auth.User.Identity.Name ?? "";
             _userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
 
-            var user = await UserManager.FindByIdAsync(_userId);
-            _alreadyOwned = user?.HasPurchased ?? false;
+            _alreadyOwned = !string.IsNullOrWhiteSpace(_userId)
+                && await Db.Purchases.AnyAsync(p => p.UserId == _userId && p.Status == "paid");
         }
     }
 

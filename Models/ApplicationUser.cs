@@ -1,10 +1,24 @@
-using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ChronoTrial.Models;
 
-public class ApplicationUser : IdentityUser
+[Table("gebruiker")]
+public class ApplicationUser
 {
-    public bool HasPurchased { get; set; } = false;
-    public DateTime? PurchaseDate { get; set; }
-    public string? DisplayName { get; set; }
+    [Key]
+    [Column("id")]
+    public int Id { get; set; }
+
+    [Required]
+    [Column("username")]
+    public string Username { get; set; } = string.Empty;
+
+    [Required]
+    [Column("email")]
+    public string Email { get; set; } = string.Empty;
+
+    [Required]
+    [Column("wachtwoord")]
+    public string Wachtwoord { get; set; } = string.Empty;
 }
