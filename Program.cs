@@ -114,6 +114,12 @@ app.MapPost("/auth/register", async (HttpContext http, ApplicationDbContext db, 
     return Results.Redirect(string.IsNullOrWhiteSpace(returnUrl) ? "/kopen" : returnUrl);
 }).DisableAntiforgery();
 
+app.MapPost("/auth/logout", async (HttpContext http) =>
+{
+    await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    return Results.Redirect("/");
+}).DisableAntiforgery();
+
 // Leaderboard API endpoint - wordt aangeroepen vanuit Unity
 app.MapPost("/api/score", async (ScoreSubmission submission, LeaderboardService lb, ApplicationDbContext db) =>
 {

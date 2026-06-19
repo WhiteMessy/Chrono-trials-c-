@@ -13,7 +13,7 @@
         <AuthorizeView>
             <Authorized>
                 <span class="nav-user">@context.User.Identity?.Name</span>
-                <form action="/Account/Logout" method="post" style="display:inline">
+                <form action="/auth/logout" method="post" style="display:inline">
                     <AntiforgeryToken />
                     <button type="submit" class="btn btn-outline btn-sm" style="border-color:rgba(240,74,74,0.4);color:#f08080;">Uitloggen</button>
                 </form>
