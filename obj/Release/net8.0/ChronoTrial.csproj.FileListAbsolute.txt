@@ -9,7 +9,6 @@
 /workspaces/Chrono-trials-c-/bin/Release/net8.0/ChronoTrial.dll
 /workspaces/Chrono-trials-c-/bin/Release/net8.0/ChronoTrial.pdb
 /workspaces/Chrono-trials-c-/bin/Release/net8.0/Humanizer.dll
-/workspaces/Chrono-trials-c-/bin/Release/net8.0/Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll
 /workspaces/Chrono-trials-c-/bin/Release/net8.0/Microsoft.Bcl.AsyncInterfaces.dll
 /workspaces/Chrono-trials-c-/bin/Release/net8.0/Microsoft.CodeAnalysis.dll
 /workspaces/Chrono-trials-c-/bin/Release/net8.0/Microsoft.CodeAnalysis.CSharp.dll

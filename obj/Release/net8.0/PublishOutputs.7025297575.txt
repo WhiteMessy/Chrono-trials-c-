@@ -5,7 +5,6 @@
 /workspaces/Chrono-trials-c-/bin/Release/net8.0/publish/ChronoTrial.dll
 /workspaces/Chrono-trials-c-/bin/Release/net8.0/publish/ChronoTrial.runtimeconfig.json
 /workspaces/Chrono-trials-c-/bin/Release/net8.0/publish/ChronoTrial.pdb
-/workspaces/Chrono-trials-c-/bin/Release/net8.0/publish/Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll
 /workspaces/Chrono-trials-c-/bin/Release/net8.0/publish/Microsoft.EntityFrameworkCore.dll
 /workspaces/Chrono-trials-c-/bin/Release/net8.0/publish/Microsoft.EntityFrameworkCore.Abstractions.dll
 /workspaces/Chrono-trials-c-/bin/Release/net8.0/publish/Microsoft.EntityFrameworkCore.Relational.dll
