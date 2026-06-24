@@ -167,11 +167,11 @@
     async Task SimulatePaid()
     {
         _loading = true;
+        _error = "";
         var success = await PaymentSvc.CompletePaymentAsync(_orderId, _userId);
         if (success)
         {
             _paymentStep = 2;
-            Nav.NavigateTo("/game");
         }
         else
             _error = "Er ging iets mis. Probeer opnieuw.";
