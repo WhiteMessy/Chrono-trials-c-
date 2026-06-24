@@ -21,4 +21,7 @@ public class ApplicationUser
     [Required]
     [Column("wachtwoord")]
     public string Wachtwoord { get; set; } = string.Empty;
+
+    [Column("purchased")]
+    public bool Purchased { get; set; }
 }

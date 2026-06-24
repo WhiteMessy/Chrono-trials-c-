@@ -14,6 +14,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection")
     ));
+builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection")
+    ));
 builder.Services.AddScoped<IPasswordHasher<ApplicationUser>, PasswordHasher<ApplicationUser>>();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -103,7 +107,8 @@ app.MapPost("/auth/register", async (HttpContext http, ApplicationDbContext db, 
     var user = new ApplicationUser
     {
         Username = username,
-        Email = email
+        Email = email,
+        Purchased = false
     };
     user.Wachtwoord = hasher.HashPassword(user, password);
 
@@ -125,7 +130,7 @@ app.MapPost("/api/score", async (ScoreSubmission submission, LeaderboardService 
 {
     // Controleer of de user bestaat en betaald heeft
     var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == submission.Username);
-    var hasPaid = user != null && await db.Purchases.AnyAsync(p => p.UserId == user.Id.ToString() && p.Status == "paid");
+    var hasPaid = user != null && user.Purchased;
     if (user == null || !hasPaid)
         return Results.Unauthorized();
 

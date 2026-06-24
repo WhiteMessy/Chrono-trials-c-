@@ -1,5 +1,9 @@
 @inherits LayoutComponentBase
+@implements IDisposable
 @inject NavigationManager Nav
+@inject AuthenticationStateProvider Auth
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@using Microsoft.EntityFrameworkCore
 
 <div class="page-wrapper">
     <nav class="nav">
@@ -8,7 +12,10 @@
         <a href="/" class="nav-link @(IsActive("/") ? "active" : "")">Home</a>
         <a href="/game" class="nav-link @(IsActive("/game") ? "active" : "")">Spelen</a>
         <a href="/leaderboard" class="nav-link @(IsActive("/leaderboard") ? "active" : "")">Leaderboard</a>
-        <a href="/kopen" class="nav-link @(IsActive("/kopen") ? "active" : "")">Kopen</a>
+        @if (_showBuyLink)
+        {
+            <a href="/kopen" class="nav-link @(IsActive("/kopen") ? "active" : "")">Kopen</a>
+        }
 
         <AuthorizeView>
             <Authorized>
@@ -35,6 +42,42 @@
 </div>
 
 @code {
+    bool _showBuyLink = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshBuyLinkAsync();
+        Nav.LocationChanged += HandleLocationChanged;
+    }
+
+    async Task RefreshBuyLinkAsync()
+    {
+        var auth = await Auth.GetAuthenticationStateAsync();
+        var userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (!int.TryParse(userId, out var parsedUserId))
+        {
+            _showBuyLink = true;
+            StateHasChanged();
+            return;
+        }
+
+        await using var db = await DbFactory.CreateDbContextAsync();
+        _showBuyLink = !await db.Users.AsNoTracking().AnyAsync(u => u.Id == parsedUserId && u.Purchased);
+
+        StateHasChanged();
+    }
+
+    private async void HandleLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        await InvokeAsync(RefreshBuyLinkAsync);
+    }
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= HandleLocationChanged;
+    }
+
     bool IsActive(string href)
     {
         var current = Nav.ToBaseRelativePath(Nav.Uri);

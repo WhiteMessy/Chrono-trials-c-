@@ -143,8 +143,8 @@
             _userName = auth.User.Identity.Name ?? "";
             _userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
 
-            _alreadyOwned = !string.IsNullOrWhiteSpace(_userId)
-                && await Db.Purchases.AnyAsync(p => p.UserId == _userId && p.Status == "paid");
+            _alreadyOwned = int.TryParse(_userId, out var parsedUserId)
+                && await Db.Users.AnyAsync(u => u.Id == parsedUserId && u.Purchased);
         }
     }
 
@@ -169,7 +169,10 @@
         _loading = true;
         var success = await PaymentSvc.CompletePaymentAsync(_orderId, _userId);
         if (success)
+        {
             _paymentStep = 2;
+            Nav.NavigateTo("/game");
+        }
         else
             _error = "Er ging iets mis. Probeer opnieuw.";
         _loading = false;

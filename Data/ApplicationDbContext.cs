@@ -24,6 +24,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(x => x.Username).HasColumnName("username").IsRequired();
             entity.Property(x => x.Email).HasColumnName("email").IsRequired();
             entity.Property(x => x.Wachtwoord).HasColumnName("wachtwoord").IsRequired();
+            entity.Property(x => x.Purchased).HasColumnName("purchased").HasDefaultValue(false);
             entity.HasIndex(x => x.Username).IsUnique();
             entity.HasIndex(x => x.Email).IsUnique();
         });

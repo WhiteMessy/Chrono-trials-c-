@@ -20,27 +20,21 @@ public class PaymentService
     // Maak een nep-betaling aan en geef een order ID terug
     public async Task<string> CreateOrderAsync(string userId)
     {
-        var orderId = $"CT-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}";
-
-        _db.Purchases.Add(new Purchase
-        {
-            UserId = userId,
-            OrderId = orderId,
-            Status = "pending"
-        });
-        await _db.SaveChangesAsync();
-
-        return orderId;
+        await Task.CompletedTask;
+        return $"CT-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}";
     }
 
     // Simuleer een geslaagde betaling (demo modus)
     public async Task<bool> CompletePaymentAsync(string orderId, string userId)
     {
-        var purchase = await _db.Purchases.FirstOrDefaultAsync(p => p.OrderId == orderId && p.UserId == userId);
-        if (purchase == null) return false;
+        if (!int.TryParse(userId, out var parsedUserId))
+            return false;
 
-        purchase.Status = "paid";
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == parsedUserId);
+        if (user == null)
+            return false;
 
+        user.Purchased = true;
         await _db.SaveChangesAsync();
         return true;
     }
