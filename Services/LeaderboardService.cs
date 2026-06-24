@@ -15,7 +15,7 @@ public class LeaderboardService
         var users = await _db.Users
             .AsNoTracking()
             .Where(user => user.Time != null)
-            .OrderBy(user => user.Time)
+            .OrderByDescending(user => user.Time)
             .Take(count)
             .Select(user => new LeaderboardEntry
             {

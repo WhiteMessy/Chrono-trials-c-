@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using ChronoTrial.Data;
 using ChronoTrial.Models;
 using ChronoTrial.Services;
@@ -52,6 +53,35 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(app.Environment.ContentRootPath, "Build")),
+    RequestPath = "/Build",
+    ServeUnknownFileTypes = true,
+    OnPrepareResponse = context =>
+    {
+        var fileName = context.File.Name;
+        var response = context.Context.Response;
+
+        if (fileName.EndsWith(".br", StringComparison.OrdinalIgnoreCase))
+        {
+            response.Headers.ContentEncoding = "br";
+
+            if (fileName.EndsWith(".js.br", StringComparison.OrdinalIgnoreCase))
+            {
+                response.ContentType = "application/javascript";
+            }
+            else if (fileName.EndsWith(".wasm.br", StringComparison.OrdinalIgnoreCase))
+            {
+                response.ContentType = "application/wasm";
+            }
+            else if (fileName.EndsWith(".data.br", StringComparison.OrdinalIgnoreCase))
+            {
+                response.ContentType = "application/octet-stream";
+            }
+        }
+    }
+});
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
