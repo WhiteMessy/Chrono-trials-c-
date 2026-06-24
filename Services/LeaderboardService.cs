@@ -14,7 +14,7 @@ public class LeaderboardService
     {
         var entries = await _db.LeaderboardEntries.ToListAsync();
         return entries
-            .OrderBy(e => e.TimeInSeconds)
+            .OrderByDescending(e => e.TimeInSeconds)
             .Take(count)
             .ToList();
     }
