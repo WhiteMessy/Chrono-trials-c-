@@ -72,34 +72,13 @@
         </div>
     }
 
-    <!-- Handmatig tijd toevoegen (voor testen) -->
-    <AuthorizeView>
-        <Authorized>
-            <div class="card" style="margin-top:2rem;max-width:500px;">
-                <p class="card-title">Tijd handmatig toevoegen (test)</p>
-                <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
-                    <input class="form-input" @bind="_newTime" placeholder="01:23.456" style="flex:1;min-width:120px;" />
-                    <button class="btn btn-gold btn-sm" @onclick="AddTime">Toevoegen</button>
-                </div>
-                @if (!string.IsNullOrEmpty(_msg))
-                {
-                    <div class="alert @(_msgOk ? "alert-success" : "alert-error")" style="margin-top:0.75rem;">@_msg</div>
-                }
-            </div>
-        </Authorized>
-    </AuthorizeView>
-
 </div>
 
 @code {
     List<LeaderboardEntry>? _entries;
-    string _newTime = "", _msg = "";
-    bool _msgOk = false;
-    
+
     // Timer voor automatisch verversen
     private System.Threading.Timer? _timer;
-
-    [CascadingParameter] Task<AuthenticationState>? AuthState { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -114,24 +93,6 @@
     }
 
     async Task LoadEntries() => _entries = await Lb.GetTopAsync(50);
-
-    async Task AddTime()
-    {
-        if (string.IsNullOrWhiteSpace(_newTime)) return;
-        
-        var auth = AuthState != null ? await AuthState : null;
-        var username = auth?.User.Identity?.Name ?? "Onbekend";
-
-        await Lb.SetTimeByUsernameAsync(username, _newTime);
-
-        _newTime = "";
-        _msg = "Tijd toegevoegd!";
-        _msgOk = true;
-        await LoadEntries();
-        
-        // Verberg bericht na 3 seconden
-        _ = Task.Delay(3000).ContinueWith(_ => { _msg = ""; InvokeAsync(StateHasChanged); });
-    }
 
     async Task Delete(int id)
     {
