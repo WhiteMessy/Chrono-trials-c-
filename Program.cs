@@ -134,13 +134,7 @@ app.MapPost("/api/score", async (ScoreSubmission submission, LeaderboardService 
     if (user == null || !hasPaid)
         return Results.Unauthorized();
 
-    await lb.AddAsync(new LeaderboardEntry
-    {
-        Username = submission.Username,
-        UserId = user.Id.ToString(),
-        Time = submission.Time,
-        Date = DateTime.UtcNow
-    });
+    await lb.SetTimeByUsernameAsync(submission.Username, submission.Time);
     return Results.Ok();
 });
 

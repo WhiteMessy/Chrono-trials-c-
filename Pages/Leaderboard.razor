@@ -122,12 +122,7 @@
         var auth = AuthState != null ? await AuthState : null;
         var username = auth?.User.Identity?.Name ?? "Onbekend";
 
-        await Lb.AddAsync(new LeaderboardEntry
-        {
-            Username = username,
-            Time = _newTime,
-            Date = DateTime.UtcNow
-        });
+        await Lb.SetTimeByUsernameAsync(username, _newTime);
 
         _newTime = "";
         _msg = "Tijd toegevoegd!";

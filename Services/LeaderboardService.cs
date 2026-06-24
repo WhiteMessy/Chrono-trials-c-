@@ -12,26 +12,107 @@ public class LeaderboardService
 
     public async Task<List<LeaderboardEntry>> GetTopAsync(int count = 50)
     {
-        var entries = await _db.LeaderboardEntries.ToListAsync();
-        return entries
-            .OrderByDescending(e => e.TimeInSeconds)
+        var users = await _db.Users
+            .AsNoTracking()
+            .Where(user => user.Time != null)
+            .OrderBy(user => user.Time)
             .Take(count)
-            .ToList();
+            .Select(user => new LeaderboardEntry
+            {
+                Id = user.Id,
+                Username = user.Username,
+                UserId = user.Id.ToString(),
+                Time = FormatTime(user.Time!.Value),
+                Date = user.TimeSetAt ?? DateTime.UtcNow
+            })
+            .ToListAsync();
+
+        return users;
     }
 
-    public async Task AddAsync(LeaderboardEntry entry)
+    public async Task SetTimeAsync(int userId, string time)
     {
-        _db.LeaderboardEntries.Add(entry);
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null)
+            return;
+
+        if (!TryParseTime(time, out var newTime))
+            return;
+
+        if (user.Time.HasValue && user.Time.Value <= newTime)
+            return;
+
+        user.Time = newTime;
+        user.TimeSetAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
     }
 
-    public async Task DeleteAsync(int id)
+    public async Task SetTimeByUsernameAsync(string username, string time)
     {
-        var entry = await _db.LeaderboardEntries.FindAsync(id);
-        if (entry != null)
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Username == username);
+        if (user == null)
+            return;
+
+        if (!TryParseTime(time, out var newTime))
+            return;
+
+        if (user.Time.HasValue && user.Time.Value <= newTime)
+            return;
+
+        user.Time = newTime;
+        user.TimeSetAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task DeleteAsync(int userId)
+    {
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user != null)
         {
-            _db.LeaderboardEntries.Remove(entry);
+            user.Time = null;
+            user.TimeSetAt = null;
             await _db.SaveChangesAsync();
         }
+    }
+
+    private static bool TryParseTime(string time, out double seconds)
+    {
+        seconds = double.MaxValue;
+
+        if (string.IsNullOrWhiteSpace(time))
+            return false;
+
+        var parts = time.Trim().Split(':', '.');
+        if (parts.Length == 3 &&
+            int.TryParse(parts[0], out var minutes) &&
+            int.TryParse(parts[1], out var wholeSeconds) &&
+            int.TryParse(parts[2], out var milliseconds))
+        {
+            seconds = minutes * 60 + wholeSeconds + milliseconds / 1000.0;
+            return true;
+        }
+
+        if (parts.Length == 2 &&
+            int.TryParse(parts[0], out var onlyMinutes) &&
+            double.TryParse(parts[1], System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var fractionalSeconds))
+        {
+            seconds = onlyMinutes * 60 + fractionalSeconds;
+            return true;
+        }
+
+        if (double.TryParse(time, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var directSeconds))
+        {
+            seconds = directSeconds;
+            return true;
+        }
+
+        return false;
+    }
+
+    private static string FormatTime(double seconds)
+    {
+        var wholeMinutes = (int)(seconds / 60);
+        var remainingSeconds = seconds - wholeMinutes * 60;
+        return $"{wholeMinutes:00}:{remainingSeconds:00.000}";
     }
 }

@@ -24,4 +24,10 @@ public class ApplicationUser
 
     [Column("purchased")]
     public bool Purchased { get; set; }
+
+    [Column("time")]
+    public double? Time { get; set; }
+
+    [Column("time_set_at")]
+    public DateTime? TimeSetAt { get; set; }
 }
