@@ -155,6 +155,38 @@ app.MapPost("/auth/logout", async (HttpContext http) =>
     return Results.Redirect("/");
 }).DisableAntiforgery();
 
+app.MapPost("/auth/delete-account", async (HttpContext http, ApplicationDbContext db) =>
+{
+    if (http.User.Identity?.IsAuthenticated != true)
+        return Results.Redirect("/login");
+
+    var userIdClaim = http.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    if (int.TryParse(userIdClaim, out var userId))
+    {
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user != null)
+        {
+            var userIdString = user.Id.ToString();
+
+            var relatedLeaderboardEntries = await db.LeaderboardEntries
+                .Where(l => l.UserId == userIdString)
+                .ToListAsync();
+            db.LeaderboardEntries.RemoveRange(relatedLeaderboardEntries);
+
+            var relatedPurchases = await db.Purchases
+                .Where(p => p.UserId == userIdString)
+                .ToListAsync();
+            db.Purchases.RemoveRange(relatedPurchases);
+
+            db.Users.Remove(user);
+            await db.SaveChangesAsync();
+        }
+    }
+
+    await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    return Results.Redirect("/?accountDeleted=1");
+}).DisableAntiforgery();
+
 // Leaderboard API endpoint - wordt aangeroepen vanuit Unity
 app.MapPost("/api/score", async (ScoreSubmission submission, LeaderboardService lb, ApplicationDbContext db) =>
 {

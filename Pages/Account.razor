@@ -1,0 +1,94 @@
+@page "/account"
+@inject AuthenticationStateProvider Auth
+@inject ApplicationDbContext Db
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Mijn account — Chrono Trials</PageTitle>
+
+<div class="container-sm" style="padding-top:5rem;">
+
+    <AuthorizeView>
+        <NotAuthorized>
+            <div style="text-align:center;padding:3rem 0;">
+                <h2 class="page-title">Inloggen vereist</h2>
+                <p class="page-subtitle" style="margin-bottom:2rem;">Log in om je account te bekijken</p>
+                <a href="/login" class="btn btn-outline">Inloggen</a>
+            </div>
+        </NotAuthorized>
+
+        <Authorized>
+            <h1 class="page-title">Mijn account</h1>
+            <p class="page-subtitle" style="margin-bottom:2rem;">Jouw accountgegevens</p>
+
+            <div class="card">
+                <p class="card-title">Accountgegevens</p>
+
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input class="form-input" type="text" value="@_username" disabled />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input class="form-input" type="text" value="@_email" disabled />
+                </div>
+            </div>
+
+            <div class="card" style="margin-top:2rem;border-color:rgba(255,58,92,0.4);">
+                <p class="card-title" style="color:#ff7090;">Gevarenzone</p>
+                <p style="font-size:14px;color:var(--text-mid);margin-bottom:1.5rem;letter-spacing:0.03em;">
+                    Als je je account verwijdert, wordt al je accountinformatie, inclusief je aankoop- en
+                    leaderboardgegevens, permanent uit de database verwijderd. Dit kan niet ongedaan worden gemaakt.
+                </p>
+
+                @if (!_confirmingDelete)
+                {
+                    <button class="btn btn-danger" @onclick="() => _confirmingDelete = true">
+                        🗑 Account verwijderen
+                    </button>
+                }
+                else
+                {
+                    <div>
+                        <p style="font-weight:600;color:#ff7090;margin-bottom:1rem;">
+                            Weet je het zeker? Deze actie is definitief.
+                        </p>
+                        <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+                            <form action="/auth/delete-account" method="post">
+                                <AntiforgeryToken />
+                                <button type="submit" class="btn btn-danger">
+                                    Ja, verwijder mijn account definitief
+                                </button>
+                            </form>
+                            <button class="btn btn-outline btn-sm" @onclick="() => _confirmingDelete = false">
+                                Annuleren
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </Authorized>
+    </AuthorizeView>
+</div>
+
+@code {
+    string _username = "";
+    string _email = "";
+    bool _confirmingDelete = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await Auth.GetAuthenticationStateAsync();
+        var userIdClaim = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (int.TryParse(userIdClaim, out var userId))
+        {
+            var user = await Db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
+            if (user != null)
+            {
+                _username = user.Username;
+                _email = user.Email;
+            }
+        }
+    }
+}
