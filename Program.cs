@@ -1,24 +1,31 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using Npgsql;
 using ChronoTrial.Data;
 using ChronoTrial.Models;
 using ChronoTrial.Services;
 var builder = WebApplication.CreateBuilder(args);
 
-// NIEUW
+var dbConnectionString = ResolvePostgresConnectionString(builder.Configuration);
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-    ));
+    options.UseNpgsql(dbConnectionString));
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-    ));
+    options.UseNpgsql(dbConnectionString));
 builder.Services.AddScoped<IPasswordHasher<ApplicationUser>, PasswordHasher<ApplicationUser>>();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -42,6 +49,8 @@ builder.Services.AddHttpContextAccessor();
 // Onze eigen services
 builder.Services.AddScoped<LeaderboardService>();
 builder.Services.AddScoped<PaymentService>();
+builder.Services.AddScoped<EmailService>();
+
 
 var app = builder.Build();
 
@@ -51,6 +60,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseStaticFiles(new StaticFileOptions
@@ -153,6 +163,73 @@ app.MapPost("/auth/logout", async (HttpContext http) =>
 {
     await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
     return Results.Redirect("/");
+}).DisableAntiforgery();
+
+app.MapPost("/auth/forgot-password", async (HttpContext http, ApplicationDbContext db, EmailService emailSvc) =>
+{
+    var form = await http.Request.ReadFormAsync();
+    var email = form["email"].ToString().Trim();
+
+    if (!string.IsNullOrWhiteSpace(email))
+    {
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == email);
+        if (user != null)
+        {
+            // Eventuele oude, nog niet gebruikte reset-links van deze gebruiker ongeldig maken
+            var oldTokens = await db.PasswordResetTokens
+                .Where(t => t.UserId == user.Id && !t.Used)
+                .ToListAsync();
+            foreach (var oldToken in oldTokens)
+                oldToken.Used = true;
+
+            var token = WebEncoders.Base64UrlEncode(RandomNumberGenerator.GetBytes(32));
+            db.PasswordResetTokens.Add(new PasswordResetToken
+            {
+                UserId = user.Id,
+                Token = token,
+                ExpiresAt = DateTime.UtcNow.AddHours(1)
+            });
+            await db.SaveChangesAsync();
+
+            var publicBaseUrl = ResolvePublicBaseUrl(http, builder.Configuration);
+            var resetLink = $"{publicBaseUrl}/wachtwoord-resetten?token={Uri.EscapeDataString(token)}";
+            await emailSvc.SendPasswordResetEmailAsync(user.Email, resetLink);
+        }
+    }
+
+
+    return Results.Redirect("/wachtwoord-vergeten?sent=1");
+}).DisableAntiforgery();
+
+app.MapPost("/auth/reset-password", async (HttpContext http, ApplicationDbContext db, IPasswordHasher<ApplicationUser> hasher) =>
+{
+    var form = await http.Request.ReadFormAsync();
+    var token = form["token"].ToString();
+    var password = form["password"].ToString();
+    var passwordConfirm = form["passwordConfirm"].ToString();
+
+    if (string.IsNullOrWhiteSpace(token))
+        return Results.Redirect("/wachtwoord-vergeten");
+
+    if (password != passwordConfirm)
+        return Results.Redirect(BuildResetPasswordUrl("Wachtwoorden komen niet overeen.", token));
+
+    if (password.Length < 6)
+        return Results.Redirect(BuildResetPasswordUrl("Wachtwoord moet minimaal 6 tekens zijn.", token));
+
+    var resetToken = await db.PasswordResetTokens.FirstOrDefaultAsync(t => t.Token == token);
+    if (resetToken == null || resetToken.Used || resetToken.ExpiresAt < DateTime.UtcNow)
+        return Results.Redirect(BuildForgotPasswordUrl("Deze link is ongeldig of verlopen. Vraag een nieuwe aan."));
+
+    var user = await db.Users.FirstOrDefaultAsync(u => u.Id == resetToken.UserId);
+    if (user == null)
+        return Results.Redirect(BuildForgotPasswordUrl("Deze link is ongeldig. Vraag een nieuwe aan."));
+
+    user.Wachtwoord = hasher.HashPassword(user, password);
+    resetToken.Used = true;
+    await db.SaveChangesAsync();
+
+    return Results.Redirect("/login?reset=1");
 }).DisableAntiforgery();
 
 app.MapPost("/auth/update-account", async (HttpContext http, ApplicationDbContext db, IPasswordHasher<ApplicationUser> hasher) =>
@@ -275,6 +352,83 @@ app.MapRazorComponents<ChronoTrial.Pages.App>()
 
 app.Run();
 
+static string ResolvePostgresConnectionString(IConfiguration configuration)
+{
+    var raw = configuration.GetConnectionString("DefaultConnection")
+        ?? configuration["DATABASE_URL"]
+        ?? configuration["POSTGRES_URL"];
+
+    if (string.IsNullOrWhiteSpace(raw))
+        throw new InvalidOperationException("Geen database-connectionstring gevonden. Configureer ConnectionStrings:DefaultConnection of DATABASE_URL.");
+
+    raw = raw.Trim().Trim('"', '\'');
+
+    if (!raw.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) &&
+        !raw.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+    {
+        return raw;
+    }
+
+    var uri = new Uri(raw);
+    var userInfo = uri.UserInfo.Split(':', 2);
+    var username = userInfo.Length > 0 ? Uri.UnescapeDataString(userInfo[0]) : string.Empty;
+    var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : string.Empty;
+    var database = uri.AbsolutePath.Trim('/');
+
+    var builder = new NpgsqlConnectionStringBuilder
+    {
+        Host = uri.Host,
+        Port = uri.IsDefaultPort ? 5432 : uri.Port,
+        Database = database,
+        Username = username,
+        Password = password,
+        SslMode = SslMode.Require
+    };
+
+    var query = QueryHelpers.ParseQuery(uri.Query);
+    if (query.TryGetValue("sslmode", out var sslMode) &&
+        Enum.TryParse<SslMode>(sslMode.ToString(), true, out var parsedSslMode))
+    {
+        builder.SslMode = parsedSslMode;
+    }
+
+    return builder.ConnectionString;
+}
+
+static string ResolvePublicBaseUrl(HttpContext http, IConfiguration configuration)
+{
+    var configuredBaseUrl = configuration["App:PublicBaseUrl"]
+        ?? configuration["PUBLIC_BASE_URL"];
+
+    if (!string.IsNullOrWhiteSpace(configuredBaseUrl) &&
+        Uri.TryCreate(configuredBaseUrl.Trim().Trim('"', '\''), UriKind.Absolute, out var configuredUri))
+    {
+        return configuredUri.GetLeftPart(UriPartial.Authority);
+    }
+
+    var scheme = http.Request.Scheme;
+    var host = http.Request.Host.Value;
+
+    if (http.Request.Headers.TryGetValue("X-Forwarded-Proto", out var forwardedProto))
+    {
+        var value = forwardedProto.ToString().Split(',')[0].Trim();
+        if (!string.IsNullOrWhiteSpace(value))
+            scheme = value;
+    }
+
+    if (http.Request.Headers.TryGetValue("X-Forwarded-Host", out var forwardedHost))
+    {
+        var value = forwardedHost.ToString().Split(',')[0].Trim();
+        if (!string.IsNullOrWhiteSpace(value))
+            host = value;
+    }
+
+    if (string.IsNullOrWhiteSpace(host))
+        throw new InvalidOperationException("Kan publieke host niet bepalen voor reset-link.");
+
+    return $"{scheme}://{host}";
+}
+
 static string NormalizeReturnUrl(string? returnUrl)
 {
     if (string.IsNullOrWhiteSpace(returnUrl))
@@ -305,5 +459,11 @@ static string BuildRegisterUrl(string error, string returnUrl)
 
 static string BuildAccountUrl(string error)
     => QueryHelpers.AddQueryString("/account", "error", error);
+
+static string BuildForgotPasswordUrl(string error)
+    => QueryHelpers.AddQueryString("/wachtwoord-vergeten", "error", error);
+
+static string BuildResetPasswordUrl(string error, string token)
+    => QueryHelpers.AddQueryString(QueryHelpers.AddQueryString("/wachtwoord-resetten", "error", error), "token", token);
 
 public record ScoreSubmission(string Username, string Time);

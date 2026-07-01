@@ -11,6 +11,11 @@
             <div class="alert alert-error">@Error</div>
         }
 
+        @if (Reset == "1")
+        {
+            <div class="alert alert-success">Je wachtwoord is gewijzigd. Je kan nu inloggen.</div>
+        }
+
         <form method="post" action="/auth/login">
             <input type="hidden" name="returnUrl" value="@ReturnUrl" />
 
@@ -22,6 +27,9 @@
             <div class="form-group">
                 <label class="form-label">Wachtwoord</label>
                 <input class="form-input" type="password" name="password" placeholder="••••••" autocomplete="current-password" />
+                <p style="text-align:right;margin-top:0.5rem;">
+                    <a href="/wachtwoord-vergeten" style="font-size:13px;color:var(--text-dim);">Wachtwoord vergeten?</a>
+                </p>
             </div>
 
             <button class="btn btn-gold" style="width:100%;justify-content:center;" type="submit">
@@ -39,4 +47,5 @@
 @code {
     [SupplyParameterFromQuery] public string? Error { get; set; }
     [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
+    [SupplyParameterFromQuery] public string? Reset { get; set; }
 }

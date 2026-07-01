@@ -1,0 +1,53 @@
+@page "/wachtwoord-vergeten"
+
+<PageTitle>Wachtwoord vergeten — Chrono Trials</PageTitle>
+
+<div class="container-sm" style="padding-top:6rem;">
+    <div class="card">
+        <p class="card-title">Wachtwoord vergeten</p>
+
+        @if (Sent == "1")
+        {
+            <div class="alert alert-success">
+                Als dit e-mailadres bij een account hoort, hebben we net een e-mail gestuurd met een link
+                waarmee je een nieuw wachtwoord kan instellen. Check ook je spam-folder.
+            </div>
+
+            <p style="text-align:center;margin-top:1.5rem;font-size:14px;color:var(--text-dim);">
+                <a href="/login">Terug naar inloggen</a>
+            </p>
+        }
+        else
+        {
+            @if (!string.IsNullOrEmpty(Error))
+            {
+                <div class="alert alert-error">@Error</div>
+            }
+
+            <p style="color:var(--text-dim);font-size:14px;letter-spacing:0.03em;margin-bottom:1.5rem;">
+                Vul het e-mailadres van je account in. We sturen je een link waarmee je een nieuw
+                wachtwoord kan instellen.
+            </p>
+
+            <form method="post" action="/auth/forgot-password">
+                <div class="form-group">
+                    <label class="form-label">E-mailadres</label>
+                    <input class="form-input" type="email" name="email" placeholder="jij@email.com" autocomplete="email" required />
+                </div>
+
+                <button class="btn btn-gold" style="width:100%;justify-content:center;" type="submit">
+                    Verstuur reset-link
+                </button>
+            </form>
+
+            <p style="text-align:center;margin-top:1.5rem;font-size:14px;color:var(--text-dim);">
+                <a href="/login">Terug naar inloggen</a>
+            </p>
+        }
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery] public string? Error { get; set; }
+    [SupplyParameterFromQuery] public string? Sent { get; set; }
+}
