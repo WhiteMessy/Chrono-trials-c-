@@ -155,6 +155,68 @@ app.MapPost("/auth/logout", async (HttpContext http) =>
     return Results.Redirect("/");
 }).DisableAntiforgery();
 
+app.MapPost("/auth/update-account", async (HttpContext http, ApplicationDbContext db, IPasswordHasher<ApplicationUser> hasher) =>
+{
+    if (http.User.Identity?.IsAuthenticated != true)
+        return Results.Redirect("/login");
+
+    var userIdClaim = http.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    if (!int.TryParse(userIdClaim, out var userId))
+        return Results.Redirect("/login");
+
+    var form = await http.Request.ReadFormAsync();
+    var username = form["username"].ToString().Trim();
+    var email = form["email"].ToString().Trim();
+    var currentPassword = form["currentPassword"].ToString();
+    var newPassword = form["newPassword"].ToString();
+    var newPasswordConfirm = form["newPasswordConfirm"].ToString();
+
+    var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId);
+    if (user == null)
+        return Results.Redirect("/login");
+
+    if (string.IsNullOrWhiteSpace(username))
+        return Results.Redirect(BuildAccountUrl("Vul een gebruikersnaam in."));
+
+    if (string.IsNullOrWhiteSpace(email))
+        return Results.Redirect(BuildAccountUrl("Vul een e-mailadres in."));
+
+    if (string.IsNullOrWhiteSpace(currentPassword))
+        return Results.Redirect(BuildAccountUrl("Vul je huidige wachtwoord in om wijzigingen te bevestigen."));
+
+    var verification = hasher.VerifyHashedPassword(user, user.Wachtwoord, currentPassword);
+    if (verification == PasswordVerificationResult.Failed)
+        return Results.Redirect(BuildAccountUrl("Huidig wachtwoord is onjuist."));
+
+    var usernameTaken = await db.Users.AnyAsync(u => u.Username == username && u.Id != userId);
+    if (usernameTaken)
+        return Results.Redirect(BuildAccountUrl("Gebruikersnaam is al in gebruik."));
+
+    var emailTaken = await db.Users.AnyAsync(u => u.Email == email && u.Id != userId);
+    if (emailTaken)
+        return Results.Redirect(BuildAccountUrl("E-mailadres is al in gebruik."));
+
+    if (!string.IsNullOrEmpty(newPassword) || !string.IsNullOrEmpty(newPasswordConfirm))
+    {
+        if (newPassword != newPasswordConfirm)
+            return Results.Redirect(BuildAccountUrl("Nieuwe wachtwoorden komen niet overeen."));
+
+        if (newPassword.Length < 6)
+            return Results.Redirect(BuildAccountUrl("Nieuw wachtwoord moet minimaal 6 tekens zijn."));
+
+        user.Wachtwoord = hasher.HashPassword(user, newPassword);
+    }
+
+    user.Username = username;
+    user.Email = email;
+    await db.SaveChangesAsync();
+
+    // Claims (o.a. naam) bevatten de oude gegevens, dus opnieuw inloggen zodat alles klopt
+    await SignInAsync(http, user);
+
+    return Results.Redirect("/account?success=1");
+}).DisableAntiforgery();
+
 app.MapPost("/auth/delete-account", async (HttpContext http, ApplicationDbContext db) =>
 {
     if (http.User.Identity?.IsAuthenticated != true)
@@ -240,5 +302,8 @@ static string BuildLoginUrl(string error, string returnUrl)
 
 static string BuildRegisterUrl(string error, string returnUrl)
     => QueryHelpers.AddQueryString(QueryHelpers.AddQueryString("/registreren", "error", error), "returnUrl", returnUrl);
+
+static string BuildAccountUrl(string error)
+    => QueryHelpers.AddQueryString("/account", "error", error);
 
 public record ScoreSubmission(string Username, string Time);

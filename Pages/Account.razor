@@ -18,20 +18,54 @@
 
         <Authorized>
             <h1 class="page-title">Mijn account</h1>
-            <p class="page-subtitle" style="margin-bottom:2rem;">Jouw accountgegevens</p>
+            <p class="page-subtitle" style="margin-bottom:2rem;">Beheer je accountgegevens</p>
+
+            @if (Success == "1")
+            {
+                <div class="alert alert-success" style="margin-bottom:1.5rem;">
+                    ✓ Je gegevens zijn bijgewerkt.
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(Error))
+            {
+                <div class="alert alert-error" style="margin-bottom:1.5rem;">@Error</div>
+            }
 
             <div class="card">
-                <p class="card-title">Accountgegevens</p>
+                <p class="card-title">Accountgegevens bewerken</p>
 
-                <div class="form-group">
-                    <label class="form-label">Username</label>
-                    <input class="form-input" type="text" value="@_username" disabled />
-                </div>
+                <form method="post" action="/auth/update-account">
+                    <AntiforgeryToken />
 
-                <div class="form-group">
-                    <label class="form-label">Email</label>
-                    <input class="form-input" type="text" value="@_email" disabled />
-                </div>
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input class="form-input" name="username" value="@_username" maxlength="20" autocomplete="username" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input class="form-input" type="email" name="email" value="@_email" autocomplete="email" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Nieuw wachtwoord (optioneel, min. 6 tekens)</label>
+                        <input class="form-input" type="password" name="newPassword" placeholder="Laat leeg om ongewijzigd te laten" autocomplete="new-password" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Nieuw wachtwoord herhalen</label>
+                        <input class="form-input" type="password" name="newPasswordConfirm" placeholder="••••••" autocomplete="new-password" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Huidig wachtwoord (verplicht om te bevestigen)</label>
+                        <input class="form-input" type="password" name="currentPassword" placeholder="••••••" autocomplete="current-password" />
+                    </div>
+
+                    <button class="btn btn-gold" style="width:100%;justify-content:center;" type="submit">
+                        Wijzigingen opslaan
+                    </button>
+                </form>
             </div>
 
             <div class="card" style="margin-top:2rem;border-color:rgba(255,58,92,0.4);">
@@ -72,6 +106,9 @@
 </div>
 
 @code {
+    [SupplyParameterFromQuery] public string? Error { get; set; }
+    [SupplyParameterFromQuery] public string? Success { get; set; }
+
     string _username = "";
     string _email = "";
     bool _confirmingDelete = false;
@@ -92,3 +129,4 @@
         }
     }
 }
+
